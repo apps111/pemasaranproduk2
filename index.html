@@ -1,0 +1,969 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Juragan Muda: Duo Pitch Master - Edugame Pemasaran SMK</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;600;700;800&display=swap');
+        
+        * {
+            font-family: 'Plus Jakarta Sans', sans-serif;
+            user-select: none;
+        }
+
+        body {
+            background: linear-gradient(135deg, #0f172a 0%, #1e1b4b 50%, #311042 100%);
+            margin: 0;
+            padding: 0;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            width: 100vw;
+            overflow: hidden;
+            color: #f8fafc;
+        }
+
+        /* Container Aspect Ratio 16:9 Presisi */
+        #game-container {
+            width: 100vw;
+            max-width: 1280px;
+            max-height: 720px;
+            height: calc(100vw * (9 / 16));
+            aspect-ratio: 16 / 9;
+            background: rgba(15, 23, 42, 0.85);
+            backdrop-filter: blur(16px);
+            position: relative;
+            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.8), 0 0 50px rgba(99, 102, 241, 0.25);
+            border: 1px solid rgba(255, 255, 255, 0.12);
+            border-radius: 20px;
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+        }
+
+        /* Pada monitor dengan rasio terlalu tinggi/lebar, pastikan 16:9 tetap terjaga */
+        @media (min-aspect-ratio: 16/9) {
+            #game-container {
+                height: 96vh;
+                width: calc(96vh * (16 / 9));
+            }
+        }
+
+        @media (max-aspect-ratio: 16/9) {
+            #game-container {
+                width: 96vw;
+                height: calc(96vw * (9 / 16));
+            }
+        }
+
+        .screen {
+            display: none;
+            width: 100%;
+            height: 100%;
+            position: absolute;
+            top: 0;
+            left: 0;
+            flex-direction: column;
+            box-sizing: border-box;
+        }
+
+        /* Container Aspect Ratio 16:9 */
+        #game-container {
+            width: 100vw;
+            max-width: 1280px;
+            aspect-ratio: 16 / 9;
+            background: rgba(15, 23, 42, 0.75);
+            backdrop-filter: blur(16px);
+            position: relative;
+            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.7), 0 0 40px rgba(99, 102, 241, 0.2);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 20px;
+            overflow: hidden;
+        }
+
+        .screen {
+            display: none;
+            width: 100%;
+            height: 100%;
+            position: absolute;
+            top: 0;
+            left: 0;
+            flex-direction: column;
+        }
+
+        .screen.active {
+            display: flex;
+            animation: zoomIn 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+        }
+
+        @keyframes zoomIn {
+            from { opacity: 0; transform: scale(0.95); }
+            to { opacity: 1; transform: scale(1); }
+        }
+
+        @keyframes pulseGlow {
+            0%, 100% { box-shadow: 0 0 15px rgba(99, 102, 241, 0.4); }
+            50% { box-shadow: 0 0 30px rgba(168, 85, 247, 0.7); }
+        }
+
+        .glow-btn {
+            animation: pulseGlow 3s infinite;
+        }
+
+        @keyframes floatAnim {
+            0%, 100% { transform: translateY(0px); }
+            50% { transform: translateY(-8px); }
+        }
+
+        .floating {
+            animation: floatAnim 4s ease-in-out infinite;
+        }
+
+        /* Gradient Cards */
+        .card-p1 {
+            background: linear-gradient(135deg, rgba(30, 58, 138, 0.6) 0%, rgba(67, 56, 202, 0.6) 100%);
+            border: 1px solid rgba(129, 140, 248, 0.3);
+        }
+        .card-p2 {
+            background: linear-gradient(135deg, rgba(131, 24, 67, 0.6) 0%, rgba(190, 24, 93, 0.6) 100%);
+            border: 1px solid rgba(244, 114, 182, 0.3);
+        }
+
+        .btn-option-p1 {
+            background: linear-gradient(135deg, #1e293b 0%, #334155 100%);
+            border: 1px solid #475569;
+            transition: all 0.2s;
+        }
+        .btn-option-p1:hover:not(:disabled) {
+            background: linear-gradient(135deg, #2563eb 0%, #4f46e5 100%);
+            border-color: #818cf8;
+            transform: translateY(-2px);
+        }
+
+        .btn-option-p2 {
+            background: linear-gradient(135deg, #1e293b 0%, #334155 100%);
+            border: 1px solid #475569;
+            transition: all 0.2s;
+        }
+        .btn-option-p2:hover:not(:disabled) {
+            background: linear-gradient(135deg, #db2777 0%, #e11d48 100%);
+            border-color: #f472b6;
+            transform: translateY(-2px);
+        }
+
+        /* Certificate Print CSS */
+        @media print {
+            body { background: white; }
+            #game-container { box-shadow: none; border: none; width: 100%; height: 100%; }
+            .no-print { display: none !important; }
+            #cert-modal { position: fixed; top: 0; left: 0; width: 100%; height: 100%; z-index: 9999; background: white; color: black; }
+        }
+    </style>
+</head>
+<body>
+
+    <div id="game-container">
+        <!-- HUD Header Presisi -->
+        <div id="hud" class="hidden absolute top-0 left-0 w-full px-6 py-3 flex justify-between items-center z-20 bg-slate-900/90 backdrop-blur-md border-b border-white/10 h-[60px]">
+            <div class="flex items-center gap-3">
+                <span id="diff-badge" class="px-3 py-1 rounded-full text-xs font-bold uppercase tracking-wider bg-indigo-500/20 text-indigo-300 border border-indigo-500/40">Mudah</span>
+                <span id="quiz-progress" class="text-xs sm:text-sm font-semibold text-slate-300">Soal 1/5</span>
+            </div>
+            
+            <div class="flex items-center gap-4 sm:gap-6">
+                <!-- Score Player 1 -->
+                <div class="flex items-center gap-2 bg-blue-950/60 border border-blue-500/40 px-3 py-1 rounded-xl">
+                    <span class="w-2.5 h-2.5 rounded-full bg-blue-400"></span>
+                    <span class="text-xs text-blue-200 font-bold">P1:</span>
+                    <span id="p1-score-hud" class="text-base sm:text-lg font-black text-blue-400">0</span>
+                </div>
+                <!-- Timer -->
+                <div class="flex items-center gap-1.5 bg-amber-500/20 border border-amber-500/40 px-3 py-1 rounded-xl">
+                    <svg class="w-3.5 h-3.5 text-amber-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+                    <span id="timer-hud" class="text-base sm:text-lg font-black text-amber-300">15s</span>
+                </div>
+                <!-- Score Player 2 -->
+                <div class="flex items-center gap-2 bg-pink-950/60 border border-pink-500/40 px-3 py-1 rounded-xl">
+                    <span id="p2-score-hud" class="text-base sm:text-lg font-black text-pink-400">0</span>
+                    <span class="text-xs text-pink-200 font-bold">:P2</span>
+                    <span class="w-2.5 h-2.5 rounded-full bg-pink-400"></span>
+                </div>
+            </div>
+        </div>
+
+        <!-- SCREEN 1: MENU UTAMA -->
+        <div id="screen-home" class="screen active justify-center items-center p-6 sm:p-8 z-10">
+            <div class="text-center max-w-3xl floating my-auto">
+                <div class="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-indigo-500/10 border border-indigo-500/30 text-indigo-300 font-semibold text-xs sm:text-sm mb-3">
+                    <svg class="w-4 h-4 text-indigo-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"></path></svg>
+                    Gim Edukasi Pemasaran Produk SMK
+                </div>
+                <h1 class="text-3xl sm:text-5xl font-black tracking-tight mb-3 bg-clip-text text-transparent bg-gradient-to-r from-blue-400 via-indigo-300 to-pink-500">
+                    JURAGAN MUDA <br><span class="text-white">DUO PITCH MASTER</span>
+                </h1>
+                <p class="text-slate-300 text-xs sm:text-base mb-6 max-w-xl mx-auto">
+                    Uji kemampuan 4P, Branding, dan Pitching Pemasaran dalam mode adu cepat 2 Pemain!
+                </p>
+
+                <!-- Input Nama Pemain -->
+                <div class="grid grid-cols-2 gap-4 max-w-md mx-auto mb-4">
+                    <div>
+                        <label class="block text-[11px] font-bold text-blue-400 uppercase tracking-wider mb-1 text-left">Pemain 1 (Biru)</label>
+                        <input type="text" id="p1-name-input" value="Tim Biru" class="w-full bg-slate-800/80 border border-blue-500/50 rounded-xl px-3 py-1.5 text-xs sm:text-sm text-white focus:outline-none focus:border-blue-400">
+                    </div>
+                    <div>
+                        <label class="block text-[11px] font-bold text-pink-400 uppercase tracking-wider mb-1 text-left">Pemain 2 (Pink)</label>
+                        <input type="text" id="p2-name-input" value="Tim Pink" class="w-full bg-slate-800/80 border border-pink-500/50 rounded-xl px-3 py-1.5 text-xs sm:text-sm text-white focus:outline-none focus:border-pink-400">
+                    </div>
+                </div>
+
+                <!-- Pilihan Tingkat Kesulitan -->
+                <div class="mb-6">
+                    <label class="block text-[11px] font-bold text-slate-400 uppercase tracking-wider mb-2">Pilih Tingkat Kesulitan</label>
+                    <div class="flex justify-center gap-3">
+                        <button onclick="setDifficulty('easy')" id="btn-diff-easy" class="diff-btn bg-emerald-500/20 border-2 border-emerald-500 text-emerald-300 px-4 py-1.5 rounded-xl font-bold text-xs sm:text-sm transition-all hover:scale-105">
+                            🌱 Mudah
+                        </button>
+                        <button onclick="setDifficulty('medium')" id="btn-diff-medium" class="diff-btn bg-slate-800/60 border border-slate-600 text-slate-300 px-4 py-1.5 rounded-xl font-bold text-xs sm:text-sm transition-all hover:scale-105">
+                            ⚡ Sedang
+                        </button>
+                        <button onclick="setDifficulty('hard')" id="btn-diff-hard" class="diff-btn bg-slate-800/60 border border-slate-600 text-slate-300 px-4 py-1.5 rounded-xl font-bold text-xs sm:text-sm transition-all hover:scale-105">
+                            🔥 Sulit
+                        </button>
+                    </div>
+                </div>
+
+                <div class="flex justify-center gap-4">
+                    <button onclick="showGuide()" class="px-5 py-2.5 rounded-xl font-bold border border-slate-600 bg-slate-800/60 hover:bg-slate-700 transition-all text-xs sm:text-sm">
+                        📖 Panduan
+                    </button>
+                    <button onclick="startGame()" class="glow-btn px-7 py-2.5 rounded-xl font-extrabold bg-gradient-to-r from-blue-600 via-indigo-600 to-pink-600 hover:from-blue-500 hover:to-pink-500 transition-all text-white text-xs sm:text-sm shadow-lg">
+                        🚀 Mulai Duel Game
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- SCREEN 2: PANDUAN -->
+        <div id="screen-guide" class="screen justify-center items-center p-6 z-10">
+            <div class="max-w-2xl bg-slate-900/90 border border-white/10 rounded-2xl p-6 sm:p-8 backdrop-blur-xl my-auto">
+                <h2 class="text-xl sm:text-2xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-blue-400 to-pink-400 mb-3">
+                    Aturan Main Mode 2 Pemain
+                </h2>
+                <ul class="space-y-2.5 text-slate-300 text-xs sm:text-sm mb-6">
+                    <li class="flex items-start gap-2">
+                        <span class="text-blue-400 font-bold">1.</span>
+                        <span>Layar dibagi 2 area: **Pemain 1 (Kiri)** dan **Pemain 2 (Kanan)**. Kedua pemain menghadapi pertanyaan pemasaran yang sama secara bersamaan.</span>
+                    </li>
+                    <li class="flex items-start gap-2">
+                        <span class="text-pink-400 font-bold">2.</span>
+                        <span>**Kecepatan & Ketepatan:** Jawaban benar bernilai **+100 poin**. Pemain yang menjawab lebih cepat mendapatkan bonus waktu.</span>
+                    </li>
+                    <li class="flex items-start gap-2">
+                        <span class="text-amber-400 font-bold">3.</span>
+                        <span>**Cakup Materi:** Strategi 4P, Pembuatan Brand/Merek, Media Promosi, dan Strategi Pitching Investor.</span>
+                    </li>
+                    <li class="flex items-start gap-2">
+                        <span class="text-emerald-400 font-bold">4.</span>
+                        <span>Di akhir gim, raih predikat **"Pitch Master"** dan unduh Sertifikat Prestasi resmi!</span>
+                    </li>
+                </ul>
+                <div class="text-right">
+                    <button onclick="nav('screen-home')" class="px-5 py-2 rounded-xl bg-slate-800 hover:bg-slate-700 font-bold text-xs sm:text-sm">
+                        Kembali ke Menu
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- SCREEN 3: GAMEPLAY ARENA (SPLIT SCREEN 2 PLAYERS) -->
+        <div id="screen-game" class="screen flex-row pt-[60px] z-10 h-full">
+            <!-- PLAYER 1 CONTAINER (LEFT) -->
+            <div class="w-1/2 p-3 sm:p-4 border-r border-white/10 flex flex-col justify-between card-p1 h-full box-border">
+                <div>
+                    <div class="flex justify-between items-center mb-2">
+                        <span class="text-[11px] font-black tracking-widest text-blue-400 uppercase" id="p1-display-name">PEMAIN 1</span>
+                        <span class="text-[10px] font-bold px-2 py-0.5 rounded bg-blue-500/20 text-blue-300 border border-blue-500/30" id="p1-status">Siap Jawab</span>
+                    </div>
+                    <div class="bg-slate-900/70 border border-blue-500/30 rounded-xl p-3 sm:p-4 mb-3 min-h-[90px] sm:min-h-[110px] flex items-center">
+                        <p id="p1-question" class="text-xs sm:text-sm font-semibold text-slate-100 leading-relaxed"></p>
+                    </div>
+                </div>
+
+                <div id="p1-options" class="grid grid-cols-1 gap-2 mb-1">
+                    <!-- Dynamic Options P1 -->
+                </div>
+            </div>
+
+            <!-- PLAYER 2 CONTAINER (RIGHT) -->
+            <div class="w-1/2 p-3 sm:p-4 flex flex-col justify-between card-p2 h-full box-border">
+                <div>
+                    <div class="flex justify-between items-center mb-2">
+                        <span class="text-[11px] font-black tracking-widest text-pink-400 uppercase" id="p2-display-name">PEMAIN 2</span>
+                        <span class="text-[10px] font-bold px-2 py-0.5 rounded bg-pink-500/20 text-pink-300 border border-pink-500/30" id="p2-status">Siap Jawab</span>
+                    </div>
+                    <div class="bg-slate-900/70 border border-pink-500/30 rounded-xl p-3 sm:p-4 mb-3 min-h-[90px] sm:min-h-[110px] flex items-center">
+                        <p id="p2-question" class="text-xs sm:text-sm font-semibold text-slate-100 leading-relaxed"></p>
+                    </div>
+                </div>
+
+                <div id="p2-options" class="grid grid-cols-1 gap-2 mb-1">
+                    <!-- Dynamic Options P2 -->
+                </div>
+            </div>
+        </div>
+
+        <!-- SCREEN 4: HASIL AKHIR & SERTIFIKAT -->
+        <div id="screen-result" class="screen justify-center items-center p-6 z-10 overflow-y-auto">
+            <div class="max-w-md sm:max-w-xl w-full bg-slate-900/90 border border-white/10 rounded-2xl p-6 sm:p-8 text-center backdrop-blur-xl my-auto">
+                <div class="text-3xl sm:text-4xl mb-1 sm:mb-2">🏆</div>
+                <h2 class="text-2xl sm:text-3xl font-extrabold text-white mb-1">Pertandingan Selesai!</h2>
+                <p id="result-winner" class="text-base sm:text-lg font-bold text-transparent bg-clip-text bg-gradient-to-r from-blue-400 via-indigo-300 to-pink-400 mb-5"></p>
+
+                <div class="grid grid-cols-2 gap-3 sm:gap-4 mb-5">
+                    <div class="bg-blue-950/40 border border-blue-500/30 rounded-xl p-3 sm:p-4">
+                        <p class="text-xs font-bold text-blue-400 mb-1" id="res-p1-name">Pemain 1</p>
+                        <p class="text-2xl sm:text-3xl font-black text-blue-300" id="res-p1-score">0</p>
+                    </div>
+                    <div class="bg-pink-950/40 border border-pink-500/30 rounded-xl p-3 sm:p-4">
+                        <p class="text-xs font-bold text-pink-400 mb-1" id="res-p2-name">Pemain 2</p>
+                        <p class="text-2xl sm:text-3xl font-black text-pink-300" id="res-p2-score">0</p>
+                    </div>
+                </div>
+
+                <div class="flex justify-center gap-3">
+                    <button onclick="resetGame()" class="px-4 py-2.5 rounded-xl font-bold bg-slate-800 hover:bg-slate-700 text-white text-xs sm:text-sm">
+                        🔄 Main Lagi
+                    </button>
+                    <button onclick="openCertificate()" class="px-5 py-2.5 rounded-xl font-extrabold bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-400 hover:to-amber-500 text-slate-950 text-xs sm:text-sm shadow-lg flex items-center gap-2">
+                        📜 Lihat Sertifikat
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- CERTIFICATE MODAL -->
+        <div id="cert-modal" class="hidden absolute inset-0 z-50 bg-slate-950/90 backdrop-blur-md flex justify-center items-center p-4">
+            <div class="bg-white text-slate-900 rounded-2xl p-6 sm:p-8 max-w-2xl w-full border-8 border-indigo-950 shadow-2xl relative my-auto">
+                <!-- Watermark / Graphic -->
+                <div class="absolute top-4 right-4 text-[10px] sm:text-xs font-black text-indigo-900/20 uppercase tracking-widest">SMK Marketing Edu</div>
+                
+                <div class="text-center border-b-2 border-indigo-100 pb-3 mb-4 sm:mb-6">
+                    <h3 class="text-[10px] sm:text-xs font-bold text-indigo-600 uppercase tracking-widest mb-1">Sertifikat Kelulusan Pembelajaran</h3>
+                    <h2 class="text-xl sm:text-2xl font-black text-slate-800">JURAGAN MUDA: MARKETING MASTER</h2>
+                    <p class="text-[11px] sm:text-xs text-slate-500">Kompetensi Keahlian Pemasaran & Strategi Bisnis</p>
+                </div>
+
+                <div class="text-center mb-4 sm:mb-6">
+                    <p class="text-[11px] sm:text-xs text-slate-500 mb-1">Diberikan Kepada Tim Pemenang:</p>
+                    <h1 id="cert-winner-name" class="text-xl sm:text-2xl font-extrabold text-indigo-900 underline decoration-indigo-300 decoration-2 mb-2">TIM CHAMPION</h1>
+                    <p class="text-[11px] sm:text-xs text-slate-600 leading-relaxed max-w-md mx-auto">
+                        Telah berhasil menyelesaikan tantangan simulasi pemasaran interaktif mencakup penyempurnaan <span class="font-bold">Strategi 4P</span>, <span class="font-bold">Branding Merek</span>, <span class="font-bold">Perencanaan Promosi</span>, dan <span class="font-bold">Pitching Investor</span>.
+                    </p>
+                </div>
+
+                <div class="grid grid-cols-2 gap-3 bg-indigo-50/60 rounded-xl p-3 mb-4 sm:mb-6 text-center border border-indigo-100">
+                    <div>
+                        <p class="text-[10px] font-bold text-indigo-400 uppercase">Tingkat Kesulitan</p>
+                        <p id="cert-diff" class="text-xs sm:text-sm font-bold text-indigo-900">SEDANG</p>
+                    </div>
+                    <div>
+                        <p class="text-[10px] font-bold text-indigo-400 uppercase">Skor Pencapaian</p>
+                        <p id="cert-score" class="text-xs sm:text-sm font-bold text-indigo-900">0 Poin</p>
+                    </div>
+                </div>
+
+                <div class="flex justify-between items-end text-left pt-1">
+                    <div>
+                        <p class="text-[10px] font-bold text-slate-400">STATUS KELULUSAN</p>
+                        <p class="text-xs font-bold text-emerald-600 flex items-center gap-1">
+                            ✓ Lulus Sangat Memuaskan
+                        </p>
+                    </div>
+                    <div class="flex gap-2 no-print">
+                        <button onclick="closeCertificate()" class="px-3.5 py-1.5 rounded-lg bg-slate-200 text-slate-700 font-bold text-xs hover:bg-slate-300">
+                            Tutup
+                        </button>
+                        <button onclick="window.print()" class="px-3.5 py-1.5 rounded-lg bg-indigo-600 text-white font-bold text-xs hover:bg-indigo-700">
+                            🖨️ Cetak Sertifikat
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+    </div>
+
+    <script>
+        /* =========================================================================
+           1. AUDIO SYNTHESIZER (WEB AUDIO API)
+           ========================================================================= */
+        let audioCtx = null;
+
+        function initAudio() {
+            if (!audioCtx) {
+                const AudioContext = window.AudioContext || window.webkitAudioContext;
+                if (AudioContext) {
+                    audioCtx = new AudioContext();
+                }
+            }
+            if (audioCtx && audioCtx.state === 'suspended') {
+                audioCtx.resume();
+            }
+        }
+
+        function playTone(freq, duration, type = 'sine', volume = 0.1) {
+            if (!audioCtx) return;
+            try {
+                const osc = audioCtx.createOscillator();
+                const gain = audioCtx.createGain();
+                osc.type = type;
+                osc.frequency.setValueAtTime(freq, audioCtx.currentTime);
+                gain.gain.setValueAtTime(volume, audioCtx.currentTime);
+                gain.gain.exponentialRampToValueAtTime(0.0001, audioCtx.currentTime + duration);
+                osc.connect(gain);
+                gain.connect(audioCtx.destination);
+                osc.start();
+                osc.stop(audioCtx.currentTime + duration);
+            } catch (e) {
+                console.error("Audio error:", e);
+            }
+        }
+
+        function sfxClick() {
+            initAudio();
+            playTone(400, 0.05, 'triangle', 0.1);
+        }
+
+        function sfxCorrect() {
+            initAudio();
+            playTone(523.25, 0.1, 'sine', 0.15); // C5
+            setTimeout(() => playTone(659.25, 0.15, 'sine', 0.15), 100); // E5
+            setTimeout(() => playTone(783.99, 0.2, 'sine', 0.15), 200); // G5
+        }
+
+        function sfxWrong() {
+            initAudio();
+            playTone(220, 0.15, 'sawtooth', 0.15); // A3
+            setTimeout(() => playTone(185, 0.25, 'sawtooth', 0.15), 120); // F#3
+        }
+
+        function sfxEnd() {
+            initAudio();
+            playTone(440, 0.15, 'triangle', 0.15);
+            setTimeout(() => playTone(554.37, 0.15, 'triangle', 0.15), 150);
+            setTimeout(() => playTone(659.25, 0.3, 'triangle', 0.2), 300);
+        }
+
+        /* =========================================================================
+           2. DATA SOAL BERDASARKAN TINGKAT KESULITAN (SOAL DIPERBANYAK & PENGECOH MIRIP)
+           ========================================================================= */
+        const quizBank = {
+            easy: [
+                {
+                    q: "Manakah elemen 4P yang berfokus pada penetapan nilai mata uang yang wajib dibayarkan konsumen?",
+                    options: [
+                        "Price (Harga)", 
+                        "Place (Tempat)", 
+                        "Product (Produk)", 
+                        "Promotion (Promosi)"
+                    ],
+                    correct: 0
+                },
+                {
+                    q: "Komponen visual identitas merek yang dirancang berupa bentuk simbol unik dinamakan...",
+                    options: [
+                        "Logo produk", 
+                        "Slogan merek", 
+                        "Tagline usaha", 
+                        "Brosur iklan"
+                    ],
+                    correct: 0
+                },
+                {
+                    q: "Saluran media promosi modern yang paling efisien untuk menjangkau kelompok target remaja adalah...",
+                    options: [
+                        "Media sosial interaktif", 
+                        "Brosur cetak fisik", 
+                        "Papan baliho jalanan", 
+                        "Surat kabar harian"
+                    ],
+                    correct: 0
+                },
+                {
+                    q: "Tujuan utama mengadakan sesi presentasi singkat (Pitching) di hadapan calon investor adalah...",
+                    options: [
+                        "Mendapatkan dukungan modal usaha", 
+                        "Memamerkan fasilitas ruang pameran", 
+                        "Menjual sisa stok produk lama", 
+                        "Membuat materi konten poster digital"
+                    ],
+                    correct: 0
+                },
+                {
+                    q: "Apa nama strategi pemasaran yang mencakup kombinasi Produk, Harga, Tempat, dan Promosi?",
+                    options: [
+                        "Bauran Pemasaran (Marketing Mix)", 
+                        "Segmen Pasar (Market Segment)", 
+                        "Evaluasi Bisnis (Business Evaluation)", 
+                        "Analisis Pelanggan (Customer Analysis)"
+                    ],
+                    correct: 0
+                },
+                {
+                    q: "Kalimat singkat yang mudah diingat untuk menyampaikan nilai utama suatu merek dinamakan...",
+                    options: [
+                        "Slogan atau Tagline", 
+                        "Visi atau Misi Usaha", 
+                        "Hak Cipta atau Lisensi", 
+                        "Deskripsi Singkat Produk"
+                    ],
+                    correct: 0
+                },
+                {
+                    q: "Salah satu contoh saluran penjualan langsung dalam elemen Tempat (Place) bagi siswa SMK adalah...",
+                    options: [
+                        "Bazar dan kantin sekolah", 
+                        "Toko ritel berskala besar", 
+                        "Pasar ekspor mancanegara", 
+                        "Gudang penyimpanan barang"
+                    ],
+                    correct: 0
+                },
+                {
+                    q: "Langkah pertama yang dilakukan tim sebelum merancang desain konten promosi adalah menentukan...",
+                    options: [
+                        "Target pasar sasaran", 
+                        "Biaya cetak kemasan", 
+                        "Gaya warna logo utama", 
+                        "Jadwal pameran produk"
+                    ],
+                    correct: 0
+                }
+            ],
+            medium: [
+                {
+                    q: "Keputusan tim untuk membuka stan jualan di kantin sekolah dan toko online termasuk dalam elemen 4P...",
+                    options: [
+                        "Place (Saluran Tempat)", 
+                        "Price (Penetapan Harga)", 
+                        "Product (Pengembangan Produk)", 
+                        "Promotion (Strategi Promosi)"
+                    ],
+                    correct: 0
+                },
+                {
+                    q: "Merancang Slogan/Tagline yang unik dan konsisten dalam strategi Branding bertujuan untuk...",
+                    options: [
+                        "Memudahkan konsumen mengingat identitas merek", 
+                        "Menjelaskan komposisi bahan baku secara rinci", 
+                        "Menentukan besaran potongan harga promo", 
+                        "Menurunkan biaya Operasional Produksi Barang"
+                    ],
+                    correct: 0
+                },
+                {
+                    q: "Dalam perencanaan promosi, pesan yang disampaikan kepada target konsumen remaja sebaiknya dirancang...",
+                    options: [
+                        "Kekinian, komunikatif, dan menarik", 
+                        "Kaku, teknis, dan sangat formal", 
+                        "Panjang, rumit, dan ilmiah murni", 
+                        "Menggunakan istilah teknis pabrik"
+                    ],
+                    correct: 0
+                },
+                {
+                    q: "Saat Pitching ke Investor, pemaparan mengenai 'Keunggulan Bersaing' sangat penting untuk...",
+                    options: [
+                        "Menunjukkan keunikan produk dibanding kompetitor", 
+                        "Meminta simpati dan belas kasihan dari investor", 
+                        "Menjelaskan alasan menaikkan harga jual barang", 
+                        "Membandingkan kelemahan internal anggota tim"
+                    ],
+                    correct: 0
+                },
+                {
+                    q: "Format perancangan promosi yang menghubungkan Media, Target, Pesan, Waktu, dan Anggaran dinamakan...",
+                    options: [
+                        "Tabel Matriks Perancangan Promosi", 
+                        "Laporan Keuangan Akhir Usaha", 
+                        "Buku Catatan Inventaris Barang", 
+                        "Lembar Evaluasi Kinerja Karyawan"
+                    ],
+                    correct: 0
+                },
+                {
+                    q: "Tujuan membuat prototype kemasan yang menarik sebelum produk dipasarkan secara massal adalah...",
+                    options: [
+                        "Menguji daya tarik visual dan perlindungan isi", 
+                        "Menghabiskan anggaran sisa dari investor", 
+                        "Memenuhi syarat administrasi kelas semata", 
+                        "Memperpanjang proses produksi produk baru"
+                    ],
+                    correct: 0
+                },
+                {
+                    q: "Materi promosi naskah iklan durasi 30 detik harus memiliki struktur penyampaian yang mencakup...",
+                    options: [
+                        "Pikat perhatian, masalah, dan solusi produk", 
+                        "Sejarah berdiri tim, biodata, dan alamat", 
+                        "Rincian harga beli bahan baku dari pemasok", 
+                        "Ulasan lengkap seluruh varian rasa barang"
+                    ],
+                    correct: 0
+                },
+                {
+                    q: "Mengapa masukan (feedback) dari pelanggan pada pertemuan pertama sangat penting untuk perbaikan 4P?",
+                    options: [
+                        "Untuk menyempurnakan strategi produk dan promosi", 
+                        "Untuk mengganti seluruh anggota tim pemasaran", 
+                        "Untuk membatalkan peluncuran merek ke pasar", 
+                        "Untuk menurunkan standar kualitas kemasan produk"
+                    ],
+                    correct: 0
+                }
+            ],
+            hard: [
+                {
+                    q: "Apabila pesaing menurunkan harga secara drastis, langkah penyempurnaan 4P yang tepat tanpa merusak citra adalah...",
+                    options: [
+                        "Meningkatkan nilai tambah pada Produk dan Branding", 
+                        "Ikut menurunkan harga produk hingga merugi besar", 
+                        "Menghentikan seluruh kegiatan saluran distribusi Place", 
+                        "Menghapus seluruh anggaran kegiatan strategi Promosi"
+                    ],
+                    correct: 0
+                },
+                {
+                    q: "Indikator utama yang menentukan efisiensi perencanaan promosi pada tabel matrik pemasaran adalah...",
+                    options: [
+                        "Kesesuaian antara media dan pesan dengan Target Pasar", 
+                        "Jumlah lembar cetakan poster digital yang disebarkan", 
+                        "Besarnya total anggaran promosi yang dihabiskan tim", 
+                        "Lamanya durasi waktu penayangan iklan di media sosial"
+                    ],
+                    correct: 0
+                },
+                {
+                    q: "Ketika investor mempertanyakan 'Berapa lama potensi pengembalian modal?', aspek strategi yang sedang diuji adalah...",
+                    options: [
+                        "Proyeksi Finansial dan Potensi Permintaan Pasar", 
+                        "Keindahan warna logo dan estetika slogan merek", 
+                        "Penggunaan font pada naskah presentasi pitching", 
+                        "Kreativitas desain kemasan luar barang jadi"
+                    ],
+                    correct: 0
+                },
+                {
+                    q: "Kemasan produk berfungi sebagai 'Silent Salesman' dalam penjualan offline maupun online. Maksud pernyataan tersebut adalah...",
+                    options: [
+                        "Desain kemasan mampu menarik pembeli tanpa staf penjual", 
+                        "Kemasan dilengkapi fitur teknologi suara otomatis", 
+                        "Kemasan dibuat dengan warna gelap tanpa ornamen visual", 
+                        "Kemasan dijual secara terpisah dari isi produk utama"
+                    ],
+                    correct: 0
+                },
+                {
+                    q: "Dalam sesi Pitching, ketika menyampaikan analisis 'Masalah Pelanggan', tim pemasaran harus menyajikannya berdasarkan...",
+                    options: [
+                        "Data fakta lapangan dan kebutuhan riil konsumen", 
+                        "Asumsi pribadi tanpa bukti riset pasar nyata", 
+                        "Keinginan internal anggota tim pembuat produk", 
+                        "Tren sesaat yang tidak berkaitan dengan produk"
+                    ],
+                    correct: 0
+                },
+                {
+                    q: "Bagaimana integrasi strategi 'Price' dan 'Promotion' yang efisien saat meluncurkan produk baru di sekolah?",
+                    options: [
+                        "Memberikan harga perkenalan spesial dengan promosi terbatas", 
+                        "Menjual dengan harga setinggi mungkin tanpa promosi awal", 
+                        "Membagikan seluruh produk secara gratis tanpa batas waktu", 
+                        "Menjual rugi produk tanpa mencantumkan label harga pasti"
+                    ],
+                    correct: 0
+                },
+                {
+                    q: "Fungsi utama rubrik penilaian dan polling umpan balik dari audiens saat sesi Pitching adalah...",
+                    options: [
+                        "Memberikan evaluasi objektif untuk perbaikan strategi", 
+                        "Menentukan tim yang berhak menguasai pasar sekolah", 
+                        "Menghukum tim yang belum memiliki desain logo bagus", 
+                        "Memilih kriteria produk yang paling murah harganya"
+                    ],
+                    correct: 0
+                },
+                {
+                    q: "Sebuah merek yang memiliki positioning kuat di mata konsumen ditandai dengan kemampuan merek tersebut dalam...",
+                    options: [
+                        "Menempati posisi unik di benak konsumen dibanding pesaing", 
+                        "Menjual produk di semua tempat tanpa terkecuali", 
+                        "Mengubah logo dan nama merek setiap minggu sekali", 
+                        "Membuat harga produk paling mahal di seluruh pasar"
+                    ],
+                    correct: 0
+                }
+            ]
+        };
+
+        /* =========================================================================
+           3. GAME STATE MANAGEMENT & SHUFFLE UTILITIES
+           ========================================================================= */
+        let state = {
+            difficulty: 'easy',
+            timerSecs: 15,
+            currentQuestionIdx: 0,
+            p1Score: 0,
+            p2Score: 0,
+            p1Answered: false,
+            p2Answered: false,
+            timerInterval: null,
+            questions: [],
+            p1Name: 'Tim Biru',
+            p2Name: 'Tim Pink'
+        };
+
+        // Fungsi Pengacak Array (Fisher-Yates Shuffle Algorithm)
+        function shuffleArray(array) {
+            const arr = [...array];
+            for (let i = arr.length - 1; i > 0; i--) {
+                const j = Math.floor(Math.random() * (i + 1));
+                [arr[i], arr[j]] = [arr[j], arr[i]];
+            }
+            return arr;
+        }
+
+        // Menyiapkan Soal dan Pengacakan Opsi Jawaban
+        function prepareQuestions(difficulty) {
+            const rawQuestions = quizBank[difficulty];
+            // Acak urutan soal
+            const shuffledQ = shuffleArray(rawQuestions);
+            
+            // Acak opsi jawaban di tiap soal sambil mempertahankan indeks benar
+            return shuffledQ.map(item => {
+                const correctAnswerText = item.options[item.correct];
+                const shuffledOptions = shuffleArray(item.options);
+                const newCorrectIndex = shuffledOptions.indexOf(correctAnswerText);
+                return {
+                    q: item.q,
+                    options: shuffledOptions,
+                    correct: newCorrectIndex
+                };
+            });
+        }
+
+        function setDifficulty(diff) {
+            sfxClick();
+            state.difficulty = diff;
+            document.querySelectorAll('.diff-btn').forEach(b => {
+                b.className = 'diff-btn bg-slate-800/60 border border-slate-600 text-slate-300 px-5 py-2 rounded-xl font-bold text-sm transition-all hover:scale-105';
+            });
+            
+            const activeBtn = document.getElementById(`btn-diff-${diff}`);
+            if(diff === 'easy') {
+                activeBtn.className = 'diff-btn bg-emerald-500/20 border-2 border-emerald-500 text-emerald-300 px-5 py-2 rounded-xl font-bold text-sm transition-all hover:scale-105';
+            } else if(diff === 'medium') {
+                activeBtn.className = 'diff-btn bg-amber-500/20 border-2 border-amber-500 text-amber-300 px-5 py-2 rounded-xl font-bold text-sm transition-all hover:scale-105';
+            } else {
+                activeBtn.className = 'diff-btn bg-rose-500/20 border-2 border-rose-500 text-rose-300 px-5 py-2 rounded-xl font-bold text-sm transition-all hover:scale-105';
+            }
+        }
+
+        function nav(screenId) {
+            sfxClick();
+            document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+            document.getElementById(screenId).classList.add('active');
+        }
+
+        function showGuide() { nav('screen-guide'); }
+
+        function startGame() {
+            initAudio();
+            state.p1Name = document.getElementById('p1-name-input').value || 'Tim Biru';
+            state.p2Name = document.getElementById('p2-name-input').value || 'Tim Pink';
+            
+            document.getElementById('p1-display-name').innerText = state.p1Name;
+            document.getElementById('p2-display-name').innerText = state.p2Name;
+
+            // Mengambil & mengacak soal baru
+            state.questions = prepareQuestions(state.difficulty);
+            state.currentQuestionIdx = 0;
+            state.p1Score = 0;
+            state.p2Score = 0;
+
+            const badge = document.getElementById('diff-badge');
+            badge.innerText = state.difficulty;
+
+            document.getElementById('hud').classList.remove('hidden');
+            nav('screen-game');
+            loadQuestion();
+        }
+
+        function loadQuestion() {
+            if (state.currentQuestionIdx >= state.questions.length) {
+                endGame();
+                return;
+            }
+
+            state.p1Answered = false;
+            state.p2Answered = false;
+            
+            document.getElementById('p1-status').innerText = "Siap Jawab";
+            document.getElementById('p1-status').className = "text-xs font-bold px-2 py-0.5 rounded bg-blue-500/20 text-blue-300 border border-blue-500/30";
+            document.getElementById('p2-status').innerText = "Siap Jawab";
+            document.getElementById('p2-status').className = "text-xs font-bold px-2 py-0.5 rounded bg-pink-500/20 text-pink-300 border border-pink-500/30";
+
+            document.getElementById('quiz-progress').innerText = `Soal ${state.currentQuestionIdx + 1}/${state.questions.length}`;
+            document.getElementById('p1-score-hud').innerText = state.p1Score;
+            document.getElementById('p2-score-hud').innerText = state.p2Score;
+
+            const currentQ = state.questions[state.currentQuestionIdx];
+            document.getElementById('p1-question').innerText = currentQ.q;
+            document.getElementById('p2-question').innerText = currentQ.q;
+
+            // Render P1 Options
+            const p1Box = document.getElementById('p1-options');
+            p1Box.innerHTML = '';
+            currentQ.options.forEach((opt, idx) => {
+                p1Box.innerHTML += `
+                    <button id="p1-opt-${idx}" onclick="answer(1, ${idx})" class="btn-option-p1 w-full text-left p-3 rounded-xl text-xs sm:text-sm font-semibold text-slate-200">
+                        ${String.fromCharCode(65 + idx)}. ${opt}
+                    </button>
+                `;
+            });
+
+            // Render P2 Options
+            const p2Box = document.getElementById('p2-options');
+            p2Box.innerHTML = '';
+            currentQ.options.forEach((opt, idx) => {
+                p2Box.innerHTML += `
+                    <button id="p2-opt-${idx}" onclick="answer(2, ${idx})" class="btn-option-p2 w-full text-left p-3 rounded-xl text-xs sm:text-sm font-semibold text-slate-200">
+                        ${String.fromCharCode(65 + idx)}. ${opt}
+                    </button>
+                `;
+            });
+
+            // Timer Setup
+            clearInterval(state.timerInterval);
+            let timeLeft = state.difficulty === 'easy' ? 20 : state.difficulty === 'medium' ? 15 : 10;
+            document.getElementById('timer-hud').innerText = `${timeLeft}s`;
+
+            state.timerInterval = setInterval(() => {
+                timeLeft--;
+                document.getElementById('timer-hud').innerText = `${timeLeft}s`;
+                if (timeLeft <= 0) {
+                    clearInterval(state.timerInterval);
+                    nextQuestion();
+                }
+            }, 1000);
+        }
+
+        function answer(player, optionIdx) {
+            const currentQ = state.questions[state.currentQuestionIdx];
+            const isCorrect = optionIdx === currentQ.correct;
+
+            if (player === 1 && !state.p1Answered) {
+                state.p1Answered = true;
+                const btn = document.getElementById(`p1-opt-${optionIdx}`);
+                if (isCorrect) {
+                    sfxCorrect();
+                    state.p1Score += 100;
+                    btn.classList.add('bg-emerald-600', 'border-emerald-400');
+                    document.getElementById('p1-status').innerText = "TEPAT! (+100)";
+                    document.getElementById('p1-status').className = "text-xs font-bold px-2 py-0.5 rounded bg-emerald-500/20 text-emerald-300 border border-emerald-500/30";
+                } else {
+                    sfxWrong();
+                    btn.classList.add('bg-rose-600', 'border-rose-400');
+                    document.getElementById('p1-status').innerText = "SALAH";
+                    document.getElementById('p1-status').className = "text-xs font-bold px-2 py-0.5 rounded bg-rose-500/20 text-rose-300 border border-rose-500/30";
+                }
+                disablePlayerOptions(1);
+            } else if (player === 2 && !state.p2Answered) {
+                state.p2Answered = true;
+                const btn = document.getElementById(`p2-opt-${optionIdx}`);
+                if (isCorrect) {
+                    sfxCorrect();
+                    state.p2Score += 100;
+                    btn.classList.add('bg-emerald-600', 'border-emerald-400');
+                    document.getElementById('p2-status').innerText = "TEPAT! (+100)";
+                    document.getElementById('p2-status').className = "text-xs font-bold px-2 py-0.5 rounded bg-emerald-500/20 text-emerald-300 border border-emerald-500/30";
+                } else {
+                    sfxWrong();
+                    btn.classList.add('bg-rose-600', 'border-rose-400');
+                    document.getElementById('p2-status').innerText = "SALAH";
+                    document.getElementById('p2-status').className = "text-xs font-bold px-2 py-0.5 rounded bg-rose-500/20 text-rose-300 border border-rose-500/30";
+                }
+                disablePlayerOptions(2);
+            }
+
+            document.getElementById('p1-score-hud').innerText = state.p1Score;
+            document.getElementById('p2-score-hud').innerText = state.p2Score;
+
+            if (state.p1Answered && state.p2Answered) {
+                clearInterval(state.timerInterval);
+                setTimeout(nextQuestion, 1200);
+            }
+        }
+
+        function disablePlayerOptions(player) {
+            const prefix = player === 1 ? 'p1' : 'p2';
+            for (let i = 0; i < 4; i++) {
+                const btn = document.getElementById(`${prefix}-opt-${i}`);
+                if (btn) btn.disabled = true;
+            }
+        }
+
+        function nextQuestion() {
+            state.currentQuestionIdx++;
+            loadQuestion();
+        }
+
+        function endGame() {
+            clearInterval(state.timerInterval);
+            sfxEnd();
+            document.getElementById('hud').classList.add('hidden');
+            nav('screen-result');
+
+            document.getElementById('res-p1-name').innerText = state.p1Name;
+            document.getElementById('res-p1-score').innerText = state.p1Score;
+            document.getElementById('res-p2-name').innerText = state.p2Name;
+            document.getElementById('res-p2-score').innerText = state.p2Score;
+
+            const winnerText = document.getElementById('result-winner');
+            if (state.p1Score > state.p2Score) {
+                winnerText.innerText = `🎉 Selamat! ${state.p1Name} Memenangkan Duel Pitching!`;
+            } else if (state.p2Score > state.p1Score) {
+                winnerText.innerText = `🎉 Selamat! ${state.p2Name} Memenangkan Duel Pitching!`;
+            } else {
+                winnerText.innerText = "🤝 Hasil Seri! Kedua Tim Sama-sama Hebat!";
+            }
+        }
+
+        function resetGame() {
+            sfxClick();
+            nav('screen-home');
+        }
+
+        function openCertificate() {
+            sfxClick();
+            const winName = state.p1Score >= state.p2Score ? state.p1Name : state.p2Name;
+            const topScore = Math.max(state.p1Score, state.p2Score);
+            
+            document.getElementById('cert-winner-name').innerText = winName.toUpperCase();
+            document.getElementById('cert-diff').innerText = state.difficulty.toUpperCase();
+            document.getElementById('cert-score').innerText = `${topScore} POIN`;
+
+            document.getElementById('cert-modal').classList.remove('hidden');
+        }
+
+        function closeCertificate() {
+            sfxClick();
+            document.getElementById('cert-modal').classList.add('hidden');
+        }
+    </script>
+</body>
+</html>
